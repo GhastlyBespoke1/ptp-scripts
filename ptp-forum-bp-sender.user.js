@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PTP - Forum BP Sender
-// @version      0.1
+// @version      1.0
 // @description  A Userscript which allows you to send BP to users via forums
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/forums.php*
@@ -274,9 +274,9 @@ const SendDescription = "Pancakes!";
         let checkDb = await retrieveData(PostId)
         if(checkDb != null) {
             if(checkDb.value) {
-                UpdateQuickPost("[quote] You have sent " + e.target.calculation.value  +" points to " + username + " [/quote]\r\n\r\n");
+                UpdateQuickPost("[quote] You have sent " + checkDb.value.amount  +" points to " + checkDb.value.username + " [/quote]\r\n\r\n");
 
-                alert("You have sent " + e.target.calculation.value  +" points to " + username);
+                alert("You have sent " + checkDb.value.amount  +" points to " + checkDb.value.username);
             } else {
                 //should never be here
             }
