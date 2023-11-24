@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PTP - Forum BP Sender
-// @version      1.0
+// @version      1.1
 // @description  A Userscript which allows you to send BP to users via forums
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/forums.php*
@@ -158,6 +158,11 @@ const SendDescription = "Pancakes!";
         let input1;
         let input2;
 
+        let input3 = document.createElement('input');
+        input3.style.cssText = "width:90%;margin-top:5px;"
+        input3.name = "calculation"
+        input3.required = true;
+
         if(ForContest) {
             input1 = document.createElement('input');
             input1.value = Multiplier
@@ -172,19 +177,15 @@ const SendDescription = "Pancakes!";
 
             form.appendChild(input1);
             form.appendChild(input2);
-        }
 
-        let input3 = document.createElement('input');
-        input3.style.cssText = "width:90%;margin-top:5px;"
-        input3.name = "calculation"
-        input3.required = true;
+            input2.addEventListener("change", (event) => {
+                input3.value = input1.value * input2.value;
+            });
+        }
 
         if(MinAmount >= 1 && ForContest) {
             input2.value = MinAmount;
             input3.value = input1.value * input2.value;
-            input2.addEventListener("change", (event) => {
-                input3.value = input1.value * input2.value;
-            });
         }
 
         let submit = document.createElement('input');
