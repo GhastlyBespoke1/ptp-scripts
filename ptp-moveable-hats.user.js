@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         PTP - Dragable Party Hats
+// @name         Dragable Party Hats
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      0.1
 // @description  Makes party hats dragable
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/*
@@ -23,6 +23,7 @@
         var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             // otherwise, move the DIV from anywhere inside the DIV:
         elmnt.style.removeProperty("pointer-events");
+        elmnt.style.zIndex = "2"
         elmnt.addEventListener("mousedown", dragMouseDown)
 
         function dragMouseDown(e) {
