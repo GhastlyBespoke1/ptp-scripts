@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Dragable Party Hats
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.01
 // @description  Makes party hats dragable
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/*
