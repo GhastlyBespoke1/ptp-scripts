@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PTP - Forum BP Sender
-// @version      1.1
+// @version      1.2
 // @description  A Userscript which allows you to send BP to users via forums
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/forums.php*
@@ -8,7 +8,7 @@
 // @grant        none
 // ==/UserScript==
 
-const ForContest = true;
+const ForContest = false;
 
 const Multiplier = 50000;
 
@@ -163,6 +163,13 @@ const SendDescription = "Pancakes!";
         input3.name = "calculation"
         input3.required = true;
 
+        let DescriptionBox = document.createElement("textarea")
+        DescriptionBox.className = "form__input"
+        DescriptionBox.name = "message"
+        DescriptionBox.placeholder = "Message (optional)"
+        DescriptionBox.rows = "3"
+        DescriptionBox.style.cssText = "width:90%;margin-top:10px;"
+
         if(ForContest) {
             input1 = document.createElement('input');
             input1.value = Multiplier
@@ -200,6 +207,10 @@ const SendDescription = "Pancakes!";
         }
 
         form.appendChild(input3);
+
+        if(!ForContest) {
+            form.appendChild(DescriptionBox);
+        }
         form.appendChild(submit);
 
         div.appendChild(form);
@@ -225,6 +236,7 @@ const SendDescription = "Pancakes!";
 
         RemoveItem.addEventListener("click", async (e) => {
             await removeValue(currentElement.id);
+            submit.value = "Send BP!";
             alert("removed from db");
         });
 
@@ -239,11 +251,12 @@ const SendDescription = "Pancakes!";
         if(checkDb != null) {
             alert("You have already paid this post!")
         } else {
+            const message = (e.target.message.value !== "") || (!ForContest) ? e.target.message.value : SendDescription;
             const antiCSRF = document.body.getAttribute('data-anticsrftoken');
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "/bonus.php", true);
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.send("AntiCsrfToken="+antiCSRF+"&action=send&target=" + Url + "&amount=" + Calculation + "&message=" + SendDescription);
+            xhr.send("AntiCsrfToken="+antiCSRF+"&action=send&target=" + Url + "&amount=" + Calculation + "&message=" + message);
             xhr.onreadystatechange=function(){
                 if (xhr.readyState==4 && xhr.status==200){
                     let domParser = new window.DOMParser();
