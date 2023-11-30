@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PTP - Forum BP Sender
-// @version      1.2
+// @version      1.3
 // @description  A Userscript which allows you to send BP to users via forums
 // @author       coollachlan8
 // @match        https://passthepopcorn.me/forums.php*
@@ -271,7 +271,7 @@ const SendDescription = "Pancakes!";
 
                         alert("You have sent " + Calculation  +" points to " + username)
                     } else {
-                        alert("Failed to send BP")
+                        alert("Failed to send BP:\n" + response.textContent)
                     }
                 }
             }
