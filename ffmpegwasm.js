@@ -126,9 +126,9 @@
             off(e, t) {
                 "log" === e ? (this.#r = this.#r.filter((e) => e !== t)) : "progress" === e && (this.#a = this.#a.filter((e) => e !== t));
             }
-            load = (r = {}) => ("https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/814.ffmpeg.js" || (this.#e = new Worker("https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/814.ffmpeg.js", {type: void 0}), this.#o()), this.#i({
-              type: t.LOAD,
-              data: r
+            load = (r = {}) => (this.#e || (this.#e = new Worker("https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/814.ffmpeg.js", {type: void 0}), this.#o()), this.#i({
+                type: t.LOAD,
+                data: r
             }));
             exec = (e, s = -1, { signal: r } = {}) => this.#i({ type: t.EXEC, data: { args: e, timeout: s } }, void 0, r);
             terminate = () => {
