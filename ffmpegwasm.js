@@ -126,7 +126,7 @@
             off(e, t) {
                 "log" === e ? (this.#r = this.#r.filter((e) => e !== t)) : "progress" === e && (this.#a = this.#a.filter((e) => e !== t));
             }
-            load = (r = {}) => (this.#e || (this.#e = new Worker("https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/814.ffmpeg.js", {type: void 0}), this.#o()), this.#i({
+            load = (r = {}) => (this.#e || (this.#e = new Worker("https://raw.githubusercontent.com/coollachlan8/ptp-scripts/main/worker", {type: void 0}), this.#o()), this.#i({
                 type: t.LOAD,
                 data: r
             }));
