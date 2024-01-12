@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PTP Upload MediaInfo
-// @version      2.0
+// @version      2.1
 // @description  Drag & drop files to generate MediaInfo
 // @author       fabulist
 // @require      https://gist.github.com/po5/740d100c992f1315e81dbeca9a4b425a/raw/mediainfo.lib.js
