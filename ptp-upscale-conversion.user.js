@@ -150,7 +150,7 @@ async function handleConversions (element, status) {
 }
 
 for (let j = 0; j < torrents.length; j++) {
-  const subtitleManager = torrents[j].querySelector('#subtitleManager');
+  const subtitleManager = torrents[j].querySelector('#subtitle_manager');
   const upscaleChecker = subtitleManager.cloneNode(true);
   upscaleChecker.id = 'upscaleChecker';
 
