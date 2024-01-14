@@ -1,169 +1,174 @@
 // ==UserScript==
 // @name         PTP - Upscale Conversion
-// @namespace    ree
+// @namespace    ree meow
 // @version      1
-// @description  Converts images to SD then back to HD and makes a comparison so you can check for Upscales
+// @description  Converts images to SD then back to HD and makes a comparison so you can check for upscales
 // @author       coollachlan8 & vevv
-// @match        https://passthepopcorn.me/torrents.php*
+// @match        https://passthepopcorn.me/torrents.php*id=*
 // @icon         https://passthepopcorn.me/favicon.ico
-// @require      https://raw.githubusercontent.com/viliusle/Hermite-resize/master/src/hermite.js
-// @grant       GM_xmlhttpRequest
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
-var HERMITE = new Hermite_class();
 
-let torrents = document.querySelectorAll(".torrent_info_row");
+const torrents = document.querySelectorAll('.torrent_info_row');
 
-async function draw_image(img, ctx, canvas) {
-  img_w = img.width;
-  img_h = img.height;
-
-  canvas.width = img_w;
-  canvas.height = img_h;
-  ctx.clearRect(0, 0, img_w, img_h);
-
-  ctx.drawImage(img, 0, 0);
+async function drawImage (canvas, image, width, height, text) {
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(image, 0, 0, width, height);
+  if (text) {
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 32px Segoe UI';
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.fillText(text, 15, 15);
+    ctx.strokeText(text, 15, 15);
+  }
 }
 
-async function getResolution(group) {
-  let videoMediaInfo = group.querySelectorAll(".mediainfo__section")
-  let correctionSection;
-  let resSection = videoMediaInfo[1].querySelectorAll("tr")[1]
-  resSection = resSection.querySelectorAll('td')[1].textContent.split('x');
-  return [resSection[0], resSection[1]]
-}
-
-async function resizeImage(imageurl, w, h, idk, ctx) {
+async function getCanvasUrl (canvas) {
   return new Promise((resolve, reject) => {
-      HERMITE.resample_single(idk, w, h, true);
-      idk.toBlob((blob) => {
-          const newImg = document.createElement("img");
-          const url = window.URL.createObjectURL(blob, { type: "image/png" });
-          resolve(url)
-      });
-  })
+    canvas.toBlob((blob) => {
+      const url = window.URL.createObjectURL(blob, { type: 'image/png' });
+      resolve(url);
+    });
+  });
 }
 
-async function convertImage(imageUrl, width, height, torrentGroupData) {
+async function convertImage (imageUrl, width, height, target) {
   return new Promise(async (resolve, reject) => {
-      let [w, h] = await get_scale(width, height, 576)
+    const [w, h] = await getScale(width, height, target);
 
-      let idk = document.createElement("canvas")
-      idk.id = "reeee"
-      let ctx = idk.getContext('2d')
-      let img1 = new Image()
-      let c = "";
-      img1.crossOrigin = "Anonymous"; //cors support
+    const canvas = document.createElement('canvas');
+    const img1 = new Image();
+    let resized;
+    img1.crossOrigin = 'Anonymous'; // cors support
 
-      img1.onload = async function () {
-          draw_image(img1, ctx, idk);
-          c = await resizeImage(imageUrl, w, h, idk, ctx);
+    img1.onload = async function () {
+      drawImage(canvas, img1, w, h);
+      resized = await getCanvasUrl(canvas);
 
-          let img2 = new Image()
-          img2.crossOrigin = "Anonymous"; //cors support
+      const img2 = new Image();
+      img2.crossOrigin = 'Anonymous'; // cors support
 
-          img2.onload = async function () {
-              draw_image(img2, ctx, idk);
-              r = await resizeImage(imageUrl, width, height, idk, ctx);
-              resolve({ "source": imageUrl, "converted": r })
-          }
-          img2.src = c
-      }
-      img1.src = imageUrl;
-  })
+      img2.onload = async function () {
+        drawImage(canvas, img2, width, height, `${target}p`);
+
+        canvas.toBlob((blob) => {
+          const url = window.URL.createObjectURL(blob, { type: 'image/png' });
+          resolve(url);
+        });
+      };
+      img2.src = resized;
+    };
+    img1.src = imageUrl;
+  });
 }
 
-async function mod_2(val) {
-  return Math.round(val / 2) * 2
+async function mod2 (val) {
+  return Math.round(val / 2) * 2;
 }
 
+async function getScale (width, height, targetHeight) {
+  const aspectRatio = (width / height);
+  const targetWidth = await mod2(targetHeight * (16 / 9));
 
-async function get_scale(width, height, target_height) {
-  let aspect_ratio = (width / height)
-  let target_width = await mod_2(target_height * (16 / 9))
+  const newWidth = await mod2(Math.min(targetHeight * aspectRatio, targetWidth));
+  const newHeight = await mod2(newWidth / aspectRatio);
 
-  let new_width = await mod_2(Math.min(target_height * aspect_ratio, target_width))
-  let new_height = await mod_2(new_width / aspect_ratio)
-
-  return [new_width, new_height]
+  return [newWidth, newHeight];
 }
 
-async function storeImageLocally(imageUrl) {
+async function storeImageLocally (imageUrl) {
   return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-          method: "GET", url: imageUrl, responseType: "blob",
-          onload: function (response) {
-              if (response.status == 200) {
-                  let file = window.URL.createObjectURL(response.responseXML, { type: "image/png" });
-                  resolve(file);
-              } else {
-                  console.log("Failed to load url: " + utils[i].url)
-              }
-          },
-          onerror: response => { console.log("An Error has occured...") },
-          ontimeout: response => { console.log("An Error has occured...") },
-      });
-  })
+    const start = Date.now();
+    console.log(imageUrl);
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: imageUrl,
+      responseType: 'blob',
+      onload: function (response) {
+        console.log(Date.now() - start);
+        if (response.status === 200) {
+          const file = window.URL.createObjectURL(response.responseXML, { type: 'image/png' });
+          resolve(file);
+        } else {
+          console.log('Failed to load url: ' + response.url);
+        }
+      },
+      onerror: response => { console.log('An error has occured...'); },
+      ontimeout: response => { console.log('An error has occured...'); }
+    });
+  });
 }
 
-async function addBBcodeComp(bbcodeData, element) {
-  let ree2 = document.createElement(`a`)
-  ree2.textContent = "Show Comparison"
-  ree2.addEventListener("click", () => {
-      BBCode.ScreenshotComparisonToggleShow(this, ["Source", "UpscaleCheck"], bbcodeData);
-      return false;
-  })
-  element.appendChild(ree2)
+async function addBBcodeComp (bbcodeData, element) {
+  const a = document.createElement('a');
+  a.textContent = 'Show comparison';
+  a.href = '#';
+
+  a.addEventListener('click', () => {
+    BBCode.ScreenshotComparisonToggleShow(a, ['Source', 'UpscaleCheck (480p)', 'UpscaleCheck (576p)'], bbcodeData);
+    event.preventDefault();
+  });
+  element.appendChild(a);
 }
 
-async function handleConversion(maxQual, element) {
-  let status = element.querySelector("#status_upscale_check")
-  status.textContent = "Status: Generating Conversions"
+async function handleConversion (img) {
+  const local = await storeImageLocally(img.src);
+  const promises = [];
+  promises.push(convertImage(local, img.naturalWidth, img.naturalHeight, 480));
+  promises.push(convertImage(local, img.naturalWidth, img.naturalHeight, 576));
+  const generatedImages = [local];
+  await Promise.all(promises).then((values) => {
+    generatedImages.push(...values);
+  });
+  return generatedImages;
+}
 
-  let parent = element.parentElement;
-  let [width, height] = await getResolution(parent)
+async function handleConversions (element, status) {
+  status.textContent = 'Generating conversions...';
 
-  let images = parent.querySelectorAll(".bbcode__image")
-  let bbcode_comp = [];
+  const parent = element.parentElement;
+
+  const images = parent.querySelectorAll('.bbcode__image');
+  const promises = [];
+  const bbcodeComp = [];
+
   for (let i = 0; i < images.length; i++) {
-      let imageSource = images[i].src
-      let local = await storeImageLocally(imageSource)
-      let response = await convertImage(local, width, height, parent)
-      bbcode_comp.push(response['source'])
-      bbcode_comp.push(response['converted'])
+    promises.push(handleConversion(images[i]));
   }
 
-  await addBBcodeComp(bbcode_comp, element)
-  status.textContent = "Status: Comparisons Generated..."
+  await Promise.all(promises).then((values) => {
+    bbcodeComp.push(...values.flat(1));
+  });
 
-  console.log(bbcode_comp)
+  status.textContent = '';
+  await addBBcodeComp(bbcodeComp, status);
 }
 
-
 for (let j = 0; j < torrents.length; j++) {
-  let subtitle_manager = torrents[j].querySelector("#subtitle_manager")
-  let upscale_checker = subtitle_manager.cloneNode(true);
-  upscale_checker.id = "upscale_checker"
+  const subtitleManager = torrents[j].querySelector('#subtitleManager');
+  const upscaleChecker = subtitleManager.cloneNode(true);
+  upscaleChecker.id = 'upscaleChecker';
 
-  upscale_checker.innerHTML = ""
-  upscale_checker.textContent = "Check for Upscales:"
-  let container = document.createElement("div")
-  container.style.cssText = "width:100%;"
-  let button480 = document.createElement("button")
-  button480.textContent = "480p"
-  button480.addEventListener('click', () => { handleConversion(480, upscale_checker) })
-  button480.style.cssText = "margin: 10px;"
-  container.appendChild(button480)
-  let button576 = document.createElement("button")
-  button576.textContent = "576p"
-  button576.addEventListener('click', () => { handleConversion(576, upscale_checker) })
-  button576.style.cssText = "margin: 10px;"
+  const status = document.createElement('span');
+  status.textContent = '';
+  status.id = 'status_upscale_check';
 
-  let status = document.createElement("p")
-  status.textContent = "Status: Standing By"
-  status.id = "status_upscale_check"
-  container.appendChild(button576)
-  container.appendChild(status)
+  upscaleChecker.innerHTML = '<span style="font-weight: bold;">Check for upscales:</span>';
+  const container = document.createElement('div');
+  container.style.cssText = 'width: 100%;';
+  const button = document.createElement('button');
+  button.textContent = 'Generate';
+  button.addEventListener('click', () => { if (!status.textContent) { handleConversions(upscaleChecker, status); } });
+  button.style.cssText = 'margin: 10px; margin-left: 0px; margin-bottom: 0px;';
 
-  upscale_checker.appendChild(container)
-  subtitle_manager.parentNode.insertBefore(upscale_checker, subtitle_manager)
+  container.appendChild(button);
+  container.appendChild(status);
+
+  upscaleChecker.appendChild(container);
+  subtitleManager.parentNode.insertBefore(upscaleChecker, subtitleManager);
 }
