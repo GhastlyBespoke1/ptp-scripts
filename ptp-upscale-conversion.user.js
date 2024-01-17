@@ -11,10 +11,12 @@
 
 const torrents = document.querySelectorAll('.torrent_info_row');
 
+let hosts = ["ptpimg", "pixhost", "gifyu"]
+
 async function drawImage (canvas, image, width, height, text) {
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  let ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(image, 0, 0, width, height);
    if (text) {
@@ -39,7 +41,7 @@ async function drawImage (canvas, image, width, height, text) {
 async function getCanvasUrl (canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
-      const url = window.URL.createObjectURL(blob, { type: 'image/png' });
+      let url = window.URL.createObjectURL(blob, { type: 'image/png' });
       resolve(url);
     });
   });
@@ -47,10 +49,10 @@ async function getCanvasUrl (canvas) {
 
 async function convertImage (imageUrl, width, height, target) {
   return new Promise(async (resolve, reject) => {
-    const [w, h] = await getScale(width, height, target);
+    let [w, h] = await getScale(width, height, target);
 
-    const canvas = document.createElement('canvas');
-    const img1 = new Image();
+    let canvas = document.createElement('canvas');
+    let img1 = new Image();
     let resized;
     img1.crossOrigin = 'Anonymous'; // cors support
 
@@ -58,7 +60,7 @@ async function convertImage (imageUrl, width, height, target) {
       drawImage(canvas, img1, w, h);
       resized = await getCanvasUrl(canvas);
 
-      const img2 = new Image();
+      let img2 = new Image();
       img2.crossOrigin = 'Anonymous'; // cors support
 
       img2.onload = async function () {
@@ -89,7 +91,7 @@ async function getScale (width, height, targetHeight) {
 
 async function storeImageLocally (imageUrl) {
   return new Promise((resolve, reject) => {
-    const start = Date.now();
+    let start = Date.now();
     console.log(imageUrl);
     GM_xmlhttpRequest({
       method: 'GET',
@@ -174,14 +176,14 @@ async function addBBcodeComp (bbcodeData, element, options, group) {
 }
 
 async function handleConversion (img, options) {
-  const local = await storeImageLocally(img.src);
-  const promises = [];
+  let local = typeof hosts.find(a => img.src.includes(a)) !== "undefined" ? await storeImageLocally(img.src) : img.src
+  let promises = [];
   for(let i = 0; i < options.length; i++) {
     if(options[i].checked) {
       promises.push(convertImage(local, img.naturalWidth, img.naturalHeight, parseInt(options[i].value)));
     }
   }
-  const generatedImages = [{"type": "source", link: local}];
+  let generatedImages = [{"type": "source", link: local}];
   await Promise.all(promises).then((values) => {
     generatedImages.push(...values);
   });
@@ -190,11 +192,11 @@ async function handleConversion (img, options) {
 
 async function handleConversions (element, status, options, group) {
   status.textContent = 'Generating conversions...';
-  const parent = element.parentElement;
+  let parent = element.parentElement;
 
-  const images = parent.querySelectorAll('.bbcode__image');
-  const promises = [];
-  const bbcodeComp = [];
+  let images = parent.querySelectorAll('.bbcode__image');
+  let promises = [];
+  let bbcodeComp = [];
 
   for (let i = 0; i < images.length; i++) {
     promises.push(handleConversion(images[i], options));
@@ -204,12 +206,6 @@ async function handleConversions (element, status, options, group) {
     let idkree = values.flat(1)
     console.log(idkree)
     bbcodeComp.push(... values.flat(1));
-    // console.log(typeof bbcodeComp[idkree.type])
-    // for(let i = 0; i < idkree.length; i++) {
-    //   if(typeof bbcodeComp[idkree[i].type] === 'undefined') bbcodeComp[idkree[i].type] = [];
-    //   bbcodeComp[idkree[i].type].push(idkree[i].link);
-    // }
-
   });
   status.textContent = '';
   await addBBcodeComp(bbcodeComp, status, options, group);
@@ -243,47 +239,40 @@ async function main() {
       optionsDiv.appendChild(label)
       optionsDiv.appendChild(input)
     }
+    let grouped = true;
+    let groupLabel = document.createElement("label")
+    groupLabel.forHTML = "option_group";
+    groupLabel.textContent = "Group:"
+    groupLabel.style.cssText = "margin-right: 5px;"
 
-    let groupSelector = document.createElement("select")
-    groupSelector.name = "group_selector"
-    let labelGroup = document.createElement("label")
-    labelGroup.forHTML = "group_selector"
-    labelGroup.textContent = "Group Comps"
-    let selectYes = document.createElement('option')
-    selectYes.text = "Yes"
-    selectYes.value = true;
-    let groupOptions = true;
-    groupSelector.addEventListener('change',e => {
-      groupOptions = !groupOptions;
-    });
-    let selectNo = document.createElement('option')
-    selectNo.text = "No"
-    selectNo.value = false;
+    let groupInput = document.createElement('input')
+    groupInput.type = "checkbox"
+    groupInput.name = "option_group";
+    groupInput.style.cssText = "margin-right: 10px;"
+    groupInput.checked = grouped
+    groupInput.addEventListener("click", () => { grouped = !grouped})
 
-    groupSelector.options.add(selectYes, 1)
-    groupSelector.options.add(selectNo, 2)
-    optionsDiv.appendChild(labelGroup)
-    optionsDiv.appendChild(groupSelector)
-
-    const subtitleManager = torrents[j].querySelector('#subtitle_manager');
-    const upscaleChecker = subtitleManager.cloneNode(true);
+    let subtitleManager = torrents[j].querySelector('#subtitle_manager');
+    let upscaleChecker = subtitleManager.cloneNode(true);
     upscaleChecker.id = 'upscaleChecker';
 
-    const status = document.createElement('span');
+    let status = document.createElement('span');
     status.textContent = '';
     status.id = 'status_upscale_check';
     status.style.cssText = "display:inline-flex; flex-direction: column;"
 
     upscaleChecker.innerHTML = '<span style="font-weight: bold;">Check for upscales:</span>';
-    const container = document.createElement('div');
+    let container = document.createElement('div');
     container.style.cssText = 'width: 100%;';
-    const button = document.createElement('button');
+    let button = document.createElement('button');
     button.textContent = 'Generate';
-    button.addEventListener('click', () => { if (!status.textContent ) { handleConversions(upscaleChecker, status, options, groupOptions); } });
+    button.addEventListener('click', () => { if (!status.textContent && !status.innerHTML.startsWith("<div")) { handleConversions(upscaleChecker, status, options, grouped); } });
     button.style.cssText = 'margin: 10px; margin-left: 0px; margin-bottom: 0px;';
 
     container.appendChild(optionsDiv)
     container.appendChild(button);
+    container.appendChild(groupLabel)
+    container.appendChild(groupInput)
     container.appendChild(status);
 
     upscaleChecker.appendChild(container);
