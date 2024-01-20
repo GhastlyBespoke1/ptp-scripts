@@ -585,7 +585,7 @@ var dataURIPrefix = "data:application/octet-stream;base64,";
 function isDataURI(filename) {
     return String.prototype.startsWith ? filename.startsWith(dataURIPrefix) : filename.indexOf(dataURIPrefix) === 0;
 }
-var wasmBinaryFile = "magick.wasm";
+var wasmBinaryFile = "https://github.com/cancerberoSgx/magica/raw/master/magick-wasm/wasm/q8/magick.wasm";
 if (!isDataURI(wasmBinaryFile)) {
     wasmBinaryFile = locateFile(wasmBinaryFile);
 }
