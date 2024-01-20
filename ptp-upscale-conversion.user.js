@@ -11,7 +11,7 @@
 
 const torrents = document.querySelectorAll('.torrent_info_row');
 
-let hosts = ["ptpimg", "pixhost", "gifyu"]
+let hosts = ["ptpimg", "pixhost", "gifyu", "pterclub", "z4a", "m-team"]
 
 async function drawImage (canvas, image, width, height, text) {
   canvas.width = width;
@@ -113,9 +113,11 @@ async function storeImageLocally (imageUrl) {
 }
 
 async function getResolution(group) {
-  let widthInfo = group.previousElementSibling.querySelector("a[href='#']")
-  let resSection = widthInfo.innerText.split(" / ")[3]
-  let height = resSection.indexOf("x") > -1 ? resSection.split('x')[1] : resSection.replace("p", "");
+  let widthInfo = group.previousElementSibling.querySelector("a[href='#']:not(.sendtoclient)")
+  console.log(widthInfo)
+  let resSection = widthInfo.innerText.split(" / ")[3];
+  console.log(resSection)
+  let height = resSection.includes("x") ? resSection.split('x')[1] : resSection.replace("p", "");
 
   if(height == "PAL") height = "576"
   if(height == "NTSC") height = "480"
