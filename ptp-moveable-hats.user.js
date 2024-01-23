@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.01
 // @description  Makes party hats dragable
-// @author       coollachlan8
+// @author       Ghastly
 // @match        https://passthepopcorn.me/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=passthepopcorn.me
 // @grant        none
