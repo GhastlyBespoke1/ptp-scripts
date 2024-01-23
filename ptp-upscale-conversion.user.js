@@ -3,7 +3,7 @@
 // @namespace    ree meow
 // @version      1
 // @description  Converts images to SD then back to HD and makes a comparison so you can check for upscales
-// @author       coollachlan8 & vevv
+// @author       Ghastly & vevv
 // @match        https://passthepopcorn.me/torrents.php*id=*
 // @icon         https://passthepopcorn.me/favicon.ico
 // @grant        GM_xmlhttpRequest
