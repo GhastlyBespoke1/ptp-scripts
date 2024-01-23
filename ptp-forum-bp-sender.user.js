@@ -2,7 +2,7 @@
 // @name         PTP - Forum BP Sender
 // @version      1.3
 // @description  A Userscript which allows you to send BP to users via forums
-// @author       coollachlan8
+// @author       Ghastly
 // @match        https://passthepopcorn.me/forums.php*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=passthepopcorn.me
 // @grant        none
