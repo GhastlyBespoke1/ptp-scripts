@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        PTP - RT Ratings on Posters
-// @author      coollachlan8
-// @namespace   https://github.com/coollachlan8/ptp-scripts
+// @author      Ghastly
+// @namespace   https://github.com/ghastlybespoke1/ptp-scripts
 // @match       https://passthepopcorn.me/top10.php*
 // @icon        https://passthepopcorn.me/favicon.ico
 // @grant       GM.xmlHttpRequest
