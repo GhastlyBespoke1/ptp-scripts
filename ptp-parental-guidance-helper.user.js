@@ -97,7 +97,7 @@
         category {
          text
         }
-        guideItems(first: 10) {
+        guideItems(first: 100) {
          edges {
           node {
            text {
