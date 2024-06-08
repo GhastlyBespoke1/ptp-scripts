@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PTP Parental Guidance Helper
 // @namespace    Prism16
-// @version      1.6
+// @version      1.6.1
 // @description  Add IMDB Parental Guidance Notes Onto PTP
 // @author       Prism16 - Modified by Ghastly
 // @match        https://passthepopcorn.me/torrents.php*
@@ -11,11 +11,9 @@
 
 (function () {
   'use strict';
-  ;
-
   let hidetext = false; // or false
   var isPanelVisible = true; // or
-  var isToggleableSections = false; // or true
+  var isToggleableSections = true; // or true
 
   let style = document.createElement('style');
   style.type = 'text/css';
@@ -27,7 +25,7 @@
           color: inherit;
       }
       .parentalHeader {
-        color: #c5e197;
+        color: #F2DB83;
         margin-top: 12px;
         margin-bottom: 5px;
       }
@@ -87,8 +85,6 @@
 
   imdbUrl = imdbUrl.split("/")[4];
 
-  console.log(imdbUrl);
-
   let graphQlReq = {
     query: `query {
      title(id: "${imdbUrl}") {
@@ -135,12 +131,14 @@
           let severity = document.createElement("span")
           if(categories[i].severity != null) {
             if (categories[i].severity.text == "None") {
-              severity.style.color = "#c5e197"
+              severity.style.color = "#F2DB83"
 
             }
             if (categories[i].severity.text == "Mild") {
+              severity.style.color = "#c5e197"
+            }
+            if (categories[i].severity.text == "Moderate") {
               severity.style.color = "#fbca8c"
-
             }
             if (categories[i].severity.text == "Severe") {
               severity.style.color = "#ffb3ad"
