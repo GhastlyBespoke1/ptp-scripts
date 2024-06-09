@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PTP Parental Guidance Helper
 // @namespace    Prism16
-// @version      1.6.1
+// @version      1.7
 // @description  Add IMDB Parental Guidance Notes Onto PTP
 // @author       Prism16 - Modified by Ghastly
 // @match        https://passthepopcorn.me/torrents.php*
@@ -54,6 +54,7 @@
   var imdb = document.createElement('span');
   imdb.style.color = '#F2DB83';
   imdb.textContent = 'iMDB';
+  imdbUrl += "parentalguide";
 
   title.appendChild(imdb);
   title.appendChild(document.createTextNode(' Parental Notes'));
@@ -64,6 +65,13 @@
   toggle.href = '#';
   toggle.textContent = 'Toggle';
 
+  var imdbDisplay = document.createElement('a');
+  imdbDisplay.title = 'IMDB Url';
+  imdbDisplay.href = imdbUrl;
+  imdbDisplay.target = "_blank"
+  imdbDisplay.textContent = 'IMDB Url';
+  imdbDisplay.style.cssText = "margin-left: 5px;";
+
   toggle.onclick = function () {
     var panelBody = document.querySelector('#parents_guide .panel__body');
     panelBody.style.display = (panelBody.style.display === 'none') ? 'block' : 'none';
@@ -71,6 +79,7 @@
   };
 
   panelHeading.appendChild(title);
+  panelHeading.appendChild(imdbDisplay);
   panelHeading.appendChild(toggle);
   newPanel.appendChild(panelHeading);
   var panelBody = document.createElement('div');
@@ -83,11 +92,11 @@
   var sidebar = document.querySelector('div.sidebar');
   sidebar.insertBefore(newPanel, sidebar.childNodes[4]);
 
-  imdbUrl = imdbUrl.split("/")[4];
+  let imdbId = imdbUrl.split("/")[4];
 
   let graphQlReq = {
     query: `query {
-     title(id: "${imdbUrl}") {
+     title(id: "${imdbId}") {
       parentsGuide {
        categories {
         category {
@@ -122,6 +131,14 @@
       if (response.status >= 200 && response.status < 300) {
         let body = JSON.parse(response.response);
         let { categories } = body.data.title.parentsGuide;
+        console.log(categories)
+        if(await checkIfAllNull(categories)) {
+          categories = await scrapeAndReturn();
+
+          console.log(categories)
+          console.log("its all ogre")
+        }
+
         for (let i = 0; i < categories.length; i++) {
           let container = document.createElement("div");
 
@@ -146,7 +163,7 @@
 
             severity.innerHTML = categories[i].severity.text;
           } else {
-            severity.innerHTML = "None";
+            severity.innerHTML = "Unknown";
           }
 
           itemHeader.innerHTML = categories[i].category.text + " - ";
@@ -189,4 +206,93 @@
       }
     }
   });
+  async function checkIfAllNull(categories) {
+    let count = 0;
+    for(let i = 0; i < categories.length; i++) {
+      if(categories[i].guideItems.edges.length == 0 && categories[i].severity == null) {
+        count++
+      }
+    }
+    console.log(count)
+    if(count == 5) {
+      return true;
+    }
+    return false;
+  }
+
+  async function generateCategoryData(title, status, textItems) {
+    let categoryData = {
+        category: {
+          text: null
+        },
+        severity: {
+          text: null
+        },
+        guideItems: {
+          edges: [
+
+          ]
+        }
+      }
+      if (title) {
+        categoryData.category.text = title.innerHTML;
+      }
+      if (status) {
+        categoryData.severity.text = status.innerHTML;
+      }
+      if (textItems) {
+        for(let i = 0; i < textItems.length; i++) {
+          guideItems.edges.push({
+            node: {
+              text: {
+                plainText: textItems[i].innerHTML
+              }
+            }
+          })
+        }
+      }
+    return categoryData;
+  }
+  async function scrapeAndReturn() {
+      return new Promise((resolve, reject) => {
+
+        GM_xmlhttpRequest({
+      method: "GET",
+      url: imdbUrl,
+      onload: async function (response) {
+        let category = [];
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(response.responseText, "text/html");
+
+        var sexnudityTitle = doc.querySelector('#advisory-nudity h4');
+        var sexnudityStatus = doc.querySelector('#advisory-nudity > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
+        var sexnudityText = doc.querySelectorAll('#advisory-nudity > ul > li.ipl-zebra-list__item');
+        category.push(await generateCategoryData(sexnudityTitle, sexnudityStatus, sexnudityText))
+
+        var violencegoreTitle = doc.querySelector('#advisory-violence h4');
+        var violencegoreStatus = doc.querySelector('#advisory-violence > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
+        var violencegoreText = doc.querySelectorAll('#advisory-violence > ul > li.ipl-zebra-list__item');
+        category.push(await generateCategoryData(violencegoreTitle, violencegoreStatus, violencegoreText))
+
+        var profanityTitle = doc.querySelector('#advisory-profanity h4');
+        var profanityStatus = doc.querySelector('#advisory-profanity > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
+        var profanityText = doc.querySelectorAll('#advisory-profanity > ul > li.ipl-zebra-list__item');
+        category.push(await generateCategoryData(profanityTitle, profanityStatus, profanityText))
+
+        var alcoholdrugsTitle = doc.querySelector('#advisory-alcohol h4');
+        var alcoholdrugsStatus = doc.querySelector('#advisory-alcohol > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
+        var alcoholdrugsText = doc.querySelectorAll('#advisory-alcohol > ul > li.ipl-zebra-list__item');
+        category.push(await generateCategoryData(alcoholdrugsTitle, alcoholdrugsStatus, alcoholdrugsText))
+
+        var frighteningTitle = doc.querySelector('#advisory-frightening h4');
+        var frighteningStatus = doc.querySelector('#advisory-frightening > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
+        var frighteningText = doc.querySelectorAll('#advisory-frightening > ul > li.ipl-zebra-list__item');
+        category.push(await generateCategoryData(frighteningTitle, frighteningStatus, frighteningText))
+
+        resolve(category);
+      }
+    });
+  });
+
+  }
 })();
