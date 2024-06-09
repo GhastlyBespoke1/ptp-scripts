@@ -239,6 +239,8 @@
       }
       if (status) {
         categoryData.severity.text = status.innerHTML;
+      } else {
+        categoryData.severity.text = "Unknown";
       }
       if (textItems) {
         for(let i = 0; i < textItems.length; i++) {
