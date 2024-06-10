@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PTP Parental Guidance Helper
 // @namespace    Prism16
-// @version      1.7
+// @version      1.8
 // @description  Add IMDB Parental Guidance Notes Onto PTP
 // @author       Prism16 - Modified by Ghastly
 // @match        https://passthepopcorn.me/torrents.php*
@@ -104,12 +104,15 @@
         }
         guideItems(first: 100) {
          edges {
-          node {
-           text {
-            plainText
-           }
+            node {
+            ... on ParentsGuideItem {
+                isSpoiler
+                text {
+                    plainText
+                }
+              }
+            }
           }
-         }
         }
         severity {
          text
@@ -131,12 +134,9 @@
       if (response.status >= 200 && response.status < 300) {
         let body = JSON.parse(response.response);
         let { categories } = body.data.title.parentsGuide;
-        console.log(categories)
+
         if(await checkIfAllNull(categories)) {
           categories = await scrapeAndReturn();
-
-          console.log(categories)
-          console.log("its all ogre")
         }
 
         for (let i = 0; i < categories.length; i++) {
@@ -149,7 +149,6 @@
           if(categories[i].severity != null) {
             if (categories[i].severity.text == "None") {
               severity.style.color = "#F2DB83"
-
             }
             if (categories[i].severity.text == "Mild") {
               severity.style.color = "#c5e197"
@@ -186,9 +185,24 @@
             item.style.padding = "3px 0px"
             var text = document.createElement('a');
             text.style.color = "#FFF"
-            text.innerHTML = currentItem.node.text.plainText;
+            text.textContent = currentItem.node.text.plainText;
             if (hidetext) {
               text.classList.add('parentalspoiler');
+            }
+            if(currentItem.node.isSpoiler) {
+              text.textContent = "Potential Spoilers"
+              text.style.textDecoration = "underline"
+              text.onclick = (e) => {
+                if(e.target.textContent == currentItem.node.text.plainText) {
+                  e.target.textContent = "Potential Spoilers"
+                  e.target.style.textDecoration = "underline"
+
+                } else {
+                  e.target.textContent = currentItem.node.text.plainText;
+                  e.target.style.textDecoration = "none"
+
+                }
+              }
             }
             item.appendChild(text);
             listItems.appendChild(item)
@@ -198,7 +212,6 @@
           if(isToggleableSections) {
             itemHeader.onclick = () => {
               let list = itemHeader.parentElement.querySelector("ul");
-              console.log(list)
               list.classList.toggle("hide")
             }
           }
@@ -213,14 +226,13 @@
         count++
       }
     }
-    console.log(count)
     if(count == 5) {
       return true;
     }
     return false;
   }
 
-  async function generateCategoryData(title, status, textItems) {
+  async function generateCategoryData(title, status, textItems, spoilers) {
     let categoryData = {
         category: {
           text: null
@@ -229,9 +241,7 @@
           text: null
         },
         guideItems: {
-          edges: [
-
-          ]
+          edges: [ ]
         }
       }
       if (title) {
@@ -244,15 +254,28 @@
       }
       if (textItems) {
         for(let i = 0; i < textItems.length; i++) {
-          guideItems.edges.push({
+          categoryData.guideItems.edges.push({
             node: {
+              isSpoiler: false,
               text: {
-                plainText: textItems[i].innerHTML
+                plainText: textItems[i].textContent.replace("Edit", "")
               }
             }
           })
         }
       }
+    if(spoilers) {
+        for(let i = 0; i < spoilers.length; i++) {
+          categoryData.guideItems.edges.push({
+            node: {
+              isSpoiler: true,
+              text: {
+                plainText: spoilers[i].textContent.replace("Edit", "")
+              }
+            }
+          })
+        }
+    }
     return categoryData;
   }
   async function scrapeAndReturn() {
@@ -269,27 +292,36 @@
         var sexnudityTitle = doc.querySelector('#advisory-nudity h4');
         var sexnudityStatus = doc.querySelector('#advisory-nudity > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
         var sexnudityText = doc.querySelectorAll('#advisory-nudity > ul > li.ipl-zebra-list__item');
-        category.push(await generateCategoryData(sexnudityTitle, sexnudityStatus, sexnudityText))
+        var sexnuditySpoilers = doc.querySelectorAll("#advisory-spoiler-nudity > ul > li.ipl-zebra-list__item")
+        category.push(await generateCategoryData(sexnudityTitle, sexnudityStatus, sexnudityText, sexnuditySpoilers))
 
         var violencegoreTitle = doc.querySelector('#advisory-violence h4');
         var violencegoreStatus = doc.querySelector('#advisory-violence > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
         var violencegoreText = doc.querySelectorAll('#advisory-violence > ul > li.ipl-zebra-list__item');
-        category.push(await generateCategoryData(violencegoreTitle, violencegoreStatus, violencegoreText))
+        var violencegoreSpoilers = doc.querySelectorAll("#advisory-spoiler-violence > ul > li.ipl-zebra-list__item")
+
+        category.push(await generateCategoryData(violencegoreTitle, violencegoreStatus, violencegoreText, violencegoreSpoilers))
 
         var profanityTitle = doc.querySelector('#advisory-profanity h4');
         var profanityStatus = doc.querySelector('#advisory-profanity > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
         var profanityText = doc.querySelectorAll('#advisory-profanity > ul > li.ipl-zebra-list__item');
-        category.push(await generateCategoryData(profanityTitle, profanityStatus, profanityText))
+        var profanitySpoilers = doc.querySelectorAll("#advisory-spoiler-profanity > ul > li.ipl-zebra-list__item")
+
+        category.push(await generateCategoryData(profanityTitle, profanityStatus, profanityText, profanitySpoilers))
 
         var alcoholdrugsTitle = doc.querySelector('#advisory-alcohol h4');
         var alcoholdrugsStatus = doc.querySelector('#advisory-alcohol > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
         var alcoholdrugsText = doc.querySelectorAll('#advisory-alcohol > ul > li.ipl-zebra-list__item');
-        category.push(await generateCategoryData(alcoholdrugsTitle, alcoholdrugsStatus, alcoholdrugsText))
+        var alcoholSpoilers = doc.querySelectorAll("#advisory-spoiler-alcohol > ul > li.ipl-zebra-list__item")
+
+        category.push(await generateCategoryData(alcoholdrugsTitle, alcoholdrugsStatus, alcoholdrugsText, alcoholSpoilers))
 
         var frighteningTitle = doc.querySelector('#advisory-frightening h4');
         var frighteningStatus = doc.querySelector('#advisory-frightening > ul > li > div > label > div.ipl-swapper__content.ipl-swapper__content-primary > div > span');
         var frighteningText = doc.querySelectorAll('#advisory-frightening > ul > li.ipl-zebra-list__item');
-        category.push(await generateCategoryData(frighteningTitle, frighteningStatus, frighteningText))
+        var frighteningSpoilers = doc.querySelectorAll("#advisory-spoiler-frightening > ul > li.ipl-zebra-list__item")
+
+        category.push(await generateCategoryData(frighteningTitle, frighteningStatus, frighteningText, frighteningSpoilers))
 
         resolve(category);
       }
