@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PTP Parental Guidance Helper
 // @namespace    Prism16
-// @version      1.8
+// @version      1.8.1
 // @description  Add IMDB Parental Guidance Notes Onto PTP
 // @author       Prism16 - Modified by Ghastly
 // @match        https://passthepopcorn.me/torrents.php*
@@ -12,8 +12,9 @@
 (function () {
   'use strict';
   let hidetext = false; // or false
-  var isPanelVisible = true; // or
-  var isToggleableSections = true; // or true
+  let isPanelVisible = true; // or true
+  let isToggleableSections = true; // or true
+  let hideSpoilers = false; // or true
 
   let style = document.createElement('style');
   style.type = 'text/css';
@@ -189,7 +190,7 @@
             if (hidetext) {
               text.classList.add('parentalspoiler');
             }
-            if(currentItem.node.isSpoiler) {
+            if(currentItem.node.isSpoiler && hideSpoilers) {
               text.textContent = "Potential Spoilers"
               text.style.textDecoration = "underline"
               text.onclick = (e) => {
