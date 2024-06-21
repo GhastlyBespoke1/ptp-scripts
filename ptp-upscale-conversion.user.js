@@ -1,17 +1,19 @@
 // ==UserScript==
-// @name         PTP - Upscale Conversion
+// @name         PTP - Upscale Checker
 // @namespace    ree meow
-// @version      1
+// @version      1.1
 // @description  Converts images to SD then back to HD and makes a comparison so you can check for upscales
 // @author       Ghastly & vevv
-// @match        https://passthepopcorn.me/torrents.php*id=*
+// @match        https://passthepopcorn.me/torrents.php?id=*
+// @match        https://passthepopcorn.me/torrents.php*&id=*
+// @connet       ptpimg.me
 // @icon         https://passthepopcorn.me/favicon.ico
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 const torrents = document.querySelectorAll('.torrent_info_row');
 
-let hosts = ["ptpimg", "pixhost", "gifyu", "pterclub", "z4a", "m-team"]
+let hosts = ["imgbb"]
 
 async function drawImage (canvas, image, width, height, text) {
   canvas.width = width;
@@ -89,19 +91,23 @@ async function getScale (width, height, targetHeight) {
   return [newWidth, newHeight];
 }
 
-async function storeImageLocally (imageUrl) {
+async function storeImageLocally (imageUrl, type, raw) {
   return new Promise((resolve, reject) => {
     let start = Date.now();
-    console.log(imageUrl);
     GM_xmlhttpRequest({
       method: 'GET',
       url: imageUrl,
-      responseType: 'blob',
-      onload: function (response) {
+      responseType: !raw ? 'blob' : "text",
+      onload: async function (response) {
         console.log(Date.now() - start);
         if (response.status === 200) {
-          const file = window.URL.createObjectURL(response.responseXML, { type: 'image/png' });
-          resolve(file);
+          if(raw) {
+            //console.log(response.responseText)
+            resolve(response.responseText)
+          } else {
+            const file = window.URL.createObjectURL(response.responseXML, { type: 'image/png' });
+            resolve(file);
+          }
         } else {
           console.log('Failed to load url: ' + response.url);
         }
@@ -114,9 +120,8 @@ async function storeImageLocally (imageUrl) {
 
 async function getResolution(group) {
   let widthInfo = group.previousElementSibling.querySelector("a[href='#']:not(.sendtoclient)")
-  console.log(widthInfo)
   let resSection = widthInfo.innerText.split(" / ")[3];
-  console.log(resSection)
+
   let height = resSection.includes("x") ? resSection.split('x')[1] : resSection.replace("p", "");
 
   if(height == "PAL") height = "576"
@@ -126,7 +131,6 @@ async function getResolution(group) {
 }
 
 async function addBBcodeComp (bbcodeData, element, options, group) {
-  console.log(group)
   if(group) {
     const a = document.createElement('a');
     a.textContent = 'Show comparison';
@@ -178,7 +182,7 @@ async function addBBcodeComp (bbcodeData, element, options, group) {
 }
 
 async function handleConversion (img, options) {
-  let local = typeof hosts.find(a => img.src.includes(a)) !== "undefined" ? await storeImageLocally(img.src) : img.src
+  let local = typeof hosts.find(a => img.src.includes(a)) == "undefined" ? await storeImageLocally(img.src, "image/png", false) : img.src
   let promises = [];
   for(let i = 0; i < options.length; i++) {
     if(options[i].checked) {
@@ -206,13 +210,39 @@ async function handleConversions (element, status, options, group) {
 
   await Promise.all(promises).then((values) => {
     let idkree = values.flat(1)
-    console.log(idkree)
     bbcodeComp.push(... values.flat(1));
   });
   status.textContent = '';
   await addBBcodeComp(bbcodeComp, status, options, group);
 }
-async function main() {
+function setInnerHtml(el, html) {
+  el.innerHTML = html;
+  // Get all the scripts from the new HTML
+  const scripts = el.querySelectorAll('script');
+
+  // Loop through all the scripts
+  for (let i = 0; i < scripts.length; i++)
+  {
+    // Create a new script
+    const s = document.createElement('script');
+
+    // Go through all the attributes on the script
+    for (let j = 0; j < scripts[i].attributes.length; j++) {
+      const a = scripts[i].attributes[j];
+      // Add each attribute to the new script
+      s.setAttribute(a.name, a.value);
+    }
+
+    // Incase there is code inside the script tag
+    // Example: <script>alert</script>
+    s.innerHTML = scripts[i].innerHTML;
+
+    // Append the new script to the head (you could change this to the end of the body as well)
+    document.head.appendChild(s);
+  }
+}
+
+async function ree() {
   for (let j = 0; j < torrents.length; j++) {
     let height = await getResolution(torrents[j])
     let options = []
@@ -282,4 +312,4 @@ async function main() {
   }
 }
 
-main()
+ree()
