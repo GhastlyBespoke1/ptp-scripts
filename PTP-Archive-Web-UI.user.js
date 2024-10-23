@@ -2,7 +2,7 @@
 // @name         PTP Archive Web UI
 // @namespace    PTP
 // @description  Provides a web UI for archiving torrents.
-// @version      7
+// @version      7.1
 // @license      MIT
 // @match        https://*.passthepopcorn.me/archive.php
 // @grant        GM.openInTab
